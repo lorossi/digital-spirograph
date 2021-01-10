@@ -1,13 +1,49 @@
 /*jshint esversion: 8 */
 /*jshint strict: false */
+let s;
 
 $(document).ready(() => {
     canvas = $("#sketch")[0];
     if (canvas.getContext) {
       ctx = canvas.getContext("2d", {alpha: false});
-      s = new Sketch(canvas, ctx);
+      s = new Sketch(canvas, ctx, 5, 30);
       s.run();
     }
+
+    if (s) {
+      $("#reset").click( () => {
+        s.reset();
+      });
+
+      $("#play").click( () => {
+        if (s) {
+          s.play();
+        }
+      });
+
+      $("#stop").click( () => {
+        if (s) {
+          s.stop();
+        }
+      });
+
+      $("#duration").on("change, input", (e) => {
+        let duration = $(e.target).val();
+        $("#duration").next().find(".value").text(duration);
+        s.duration = duration;
+      });
+
+      $("[name=color_mode]").on("change", (e) => {
+        let mode = parseInt($(e.target).val()) == 0;
+        $("[name=moving_colors]").prop("disabled", !mode);
+        s.colors = mode;
+      });
+
+      $("[name=moving_colors]").on("change", (e) => s.moving_colors = $(e.target).prop("checked"));
+
+    }
+
+
 });
 
 const lcm = (arr) => {

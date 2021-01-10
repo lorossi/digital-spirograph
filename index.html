@@ -21,6 +21,37 @@
     <div class="container">
       <canvas id="sketch"  width="900" height="900">
       </canvas>
+      <div class="form">
+
+        <form>
+          <button type="button" id="reset">RESET DRAWING</button>
+          <button type="button" id="play">PLAY</button>
+          <button type="button" id="stop">STOP</button>
+        </form>
+
+        <form>
+          <label>
+            <input type="range" id="duration" name="duration" min="1" max="60">
+            Duration: <span class="value">5</span>s
+          </label>
+        </form>
+
+        <form>
+          <label>
+            <input type="radio" id="colors" name="color_mode" value="0" checked>
+            Colors
+          </label>
+          <label>
+            <input type="radio" id="colors" name="color_mode" value="1">
+            Black and white
+          </label>
+          <label>
+            <input type="checkbox" id="colors" name="moving_colors" value="2" checked>
+            Moving colors
+          </label>
+        </form>
+
+      </div>
     </div>
   </body>
 </html>

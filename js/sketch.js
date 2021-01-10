@@ -5,9 +5,10 @@ let inside_points, total_points;
 let ctx, canvas;
 
 class Sketch {
-  constructor(canvas, ctx, fps) {
+  constructor(canvas, ctx, duration, fps) {
     this.canvas = canvas;
     this.ctx = ctx;
+    this._duration = 5;
     this.setFps(fps);
 
     this.width = canvas.width;
@@ -18,7 +19,7 @@ class Sketch {
 
   setFps(fps) {
     // set fps
-    this.fps = fps || 60;
+    this.fps = fps || 30;
     // keep track of time to handle fps
     this.then = performance.now();
     // time between frames
@@ -85,33 +86,32 @@ class Sketch {
     this.noise_scl = 0.001;
     this.time_scl = 0.75;
     this.ended = false;
-    this.resolution_step = 5;
+    this.stopped = false;
     this.direction = 1;
     this.frameOffset = 0;
 
     // parameters
-    this.primes = [50, 5, 3];
+    this.primes = [8, 4, 2];
     this.scl = 0.8;
-    this.duration = 25;
     this.linewidth = 2;
-    this.colors = true;
+    this._colors = true;
+    this._moving_colors = true;
 
-    this.smooth_primes = [...this.primes];
-    while (Math.min(...this.smooth_primes) < 100) {
-      this.smooth_primes = this.smooth_primes.map(x => x * this.resolution_step);
-    }
-
+    this.smooth_primes = this.smoothNumbers(this.primes);
   }
 
   draw() {
+
+    if (this.stopped) return;
+
     let start, end, progress;
 
-    progress = this.frameCounter / (this.fps * this.duration) - this.frameOffset;
+    progress = (this.frameCounter - this.frameOffset) / (this.fps * this._duration);
 
     if (progress >= 1) {
-      this.direction = this.direction == 1 ? -1 : 1;
-      progress = 0;
-      this.frameOffset++;
+      this.frameOffset = this.frameCounter;
+      this.direction *= -1;
+      return;
     }
 
     if (this.direction == 1) {
@@ -122,17 +122,16 @@ class Sketch {
       start = parseInt(progress * end);
     }
 
-
     let coords = []; // all coordinates
 
-    let time_theta = 2 * Math.PI / (this.duration * this.fps) * this.frameCounter;
+    let time_theta = 2 * Math.PI / (this._duration * this.fps) * (this.frameCounter - this.frameOffset);
     let tx = this.time_scl * Math.cos(time_theta);
     let ty = this.time_scl * Math.sin(time_theta);
     this.ctx.save();
     this.background("black");
     this.ctx.translate(this.width / 2, this.height / 2);
     this.ctx.scale(this.scl, this.scl);
-    this.ctx.lineWidth = this.linewidth;
+    this.ctx.lineWidth = this.linewidth
     this.ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
 
     for (let i = start; i < end; i++) {
@@ -141,7 +140,7 @@ class Sketch {
       vy = 0;
 
       this.ctx.save();
-      for (let p = 0; p < this.smooth_primes.length; p++) {
+      for (let p = 0; p < this.smooth_primes.length && this.smooth_primes.length[p] != 0; p++) {
         let rho, theta;
         rho = this.width / Math.pow(2, p) / 4;
         theta = Math.PI * 2 / this.smooth_primes[p] * i;
@@ -179,18 +178,19 @@ class Sketch {
       let xx = coords[i-1][0];
       let yy = coords[i-1][1];
 
-      // noise coordinates
-      let nx = (x + xx) / 2 * this.noise_scl;
-      let ny = (y + yy) / 2 * this.noise_scl;
-      let n = this.noise.noise4D(nx, ny, tx, ty);
+      let nx, ny, n, hue;
+      if (this._moving_colors) {
+        // noise coordinates
+        nx = (x + xx) / 2 * this.noise_scl;
+        ny = (y + yy) / 2 * this.noise_scl;
+        n = this.noise.noise4D(nx, ny, tx, ty);
+        hue = (n + 1) / 2 * 360;
+      }
 
-
-      if (this.colors) {
-        let hue = (n + 1) / 2 * 360;
-        this.setHSLstroke(hue, 100, 25);
+      if (this._colors) {
+        this.setHSLstroke(hue || 0, 100, 25);
       } else {
-        let alpha = (n + 1) / 2;
-        this.setBWstroke(255, alpha);
+        this.setBWstroke(255);
       }
 
       this.ctx.beginPath();
@@ -199,6 +199,55 @@ class Sketch {
       this.ctx.stroke();
     }
     this.ctx.restore();
+  }
 
+  smoothNumbers(numbers, resolution_step, min_value) {
+    if (resolution_step === undefined) resolution_step = 2;
+    if (min_value === undefined) min_value = 25;
+
+    let smoothed_numbers = [...numbers];
+    while (Math.min(...smoothed_numbers) < min_value) {
+      smoothed_numbers = smoothed_numbers.map(x => x * resolution_step);
+    }
+    return smoothed_numbers;
+  }
+
+  reset() {
+    this.background("black");
+    this.frameOffset = this.frameCounter;
+  }
+
+  stop() {
+    this.stopped = true;
+    this.pause_started = this.frameCounter;
+  }
+
+  play() {
+    this.stopped = false;
+    this.frameOffset += this.frameCounter - this.pause_started;
+  }
+
+  get duration() {
+    return this._duration;
+  }
+
+  set duration(d) {
+    this._duration = d;
+  }
+
+  get colors() {
+    return this._colors;
+  }
+
+  set colors(c) {
+    this._colors = c;
+  }
+
+  get moving_colors() {
+    return this._moving_colors;
+  }
+
+  set moving_colors(m) {
+    this._moving_colors = m;
   }
 }
