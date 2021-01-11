@@ -18,40 +18,60 @@
   </head>
 
   <body>
-    <div class="container">
-      <canvas id="sketch"  width="900" height="900">
-      </canvas>
-      <div class="form">
+      <div class="container">
+        <canvas id="sketch"  width="900" height="900">
+        </canvas>
 
-        <form>
-          <button type="button" id="reset">RESET DRAWING</button>
-          <button type="button" id="play">PLAY</button>
-          <button type="button" id="stop">STOP</button>
-        </form>
+        <div class="form">
 
-        <form>
-          <label>
-            <input type="range" id="duration" name="duration" min="1" max="60">
-            Duration: <span class="value">5</span>s
-          </label>
-        </form>
+          <form direction="row">
+            <button type="button" id="reset">reset</button>
+            <button type="button" id="play">play</button>
+            <button type="button" id="stop">stop</button>
+          </form>
 
-        <form>
-          <label>
-            <input type="radio" id="colors" name="color_mode" value="0" checked>
-            Colors
-          </label>
-          <label>
-            <input type="radio" id="colors" name="color_mode" value="1">
-            Black and white
-          </label>
-          <label>
-            <input type="checkbox" id="colors" name="moving_colors" value="2" checked>
-            Moving colors
-          </label>
-        </form>
+          <form direction="col">
+            <label>
+              <input type="range" id="duration" name="duration_slider" min="1" max="60" value="5">
+              duration: <span class="value">5</span>s
+            </label>
+          </form>
 
+          <form direction="row">
+            <label>
+              <input type="radio" id="colors" name="color_mode" value="colors">
+              colors
+            </label>
+            <label>
+              <input type="radio" id="colors" name="color_mode" value="bw">
+                black and white
+              </label>
+          </form>
+
+          <form direction="col">
+            <label>
+              <input type="checkbox" id="colors" name="moving_colors" value="2">
+              moving colors
+            </label>
+            <label>
+              <input type="range" id="duration" name="color_slider" min="0" max="360" disabled>
+              hue: <span class="value">5</span>°
+            </label>
+          </form>
+
+          <form direction="col">
+            <label>
+              <input type="checkbox" id="colors" name="draw_circles" value="0">
+              draw inner circles
+            </label>
+          </form>
+
+          <form name="dynamic_form" direction="col">
+            <div direction="row">
+              <button type="button" id="add">add circle</button>
+              <button type="button" id="remove">remove circle</button>
+            </div>
+          </form>
       </div>
-    </div>
   </body>
 </html>

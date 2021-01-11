@@ -9,6 +9,7 @@ body *, body {
   height: 100vh;
 
   display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
 }
@@ -16,4 +17,20 @@ body *, body {
 #sketch {
   min-width: 300px;
   min-height: 300px;
+}
+
+.form {
+  min-width: 5vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+form[direction="row"] label {
+  display: inline;
+}
+
+form[direction="col"] label {
+  display: block;
 }

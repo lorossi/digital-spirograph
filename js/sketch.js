@@ -5,10 +5,9 @@ let inside_points, total_points;
 let ctx, canvas;
 
 class Sketch {
-  constructor(canvas, ctx, duration, fps) {
+  constructor(canvas, ctx, fps) {
     this.canvas = canvas;
     this.ctx = ctx;
-    this._duration = 5;
     this.setFps(fps);
 
     this.width = canvas.width;
@@ -83,100 +82,124 @@ class Sketch {
     // this is ran once
     let seed = new Date().getTime();
     this.noise = new SimplexNoise(seed);
-    this.noise_scl = 0.001;
-    this.time_scl = 0.75;
+    this.frameOffset = this.frameCounter;
     this.ended = false;
-    this.stopped = false;
+    this._stopped = false;
     this.direction = 1;
-    this.frameOffset = 0;
+    this._hue = parseInt(random() * 360);
 
     // parameters
-    this.primes = [8, 4, 2];
+    this._circles = [1];
+    this._relative_rho = [1];
+    this._duration = 15;
     this.scl = 0.8;
-    this.linewidth = 2;
-    this._colors = true;
-    this._moving_colors = true;
+    this._colors = false;
+    this._moving_colors = false;
+    this._hue = parseInt(random() * 360);
+    this._draw_circles = true;
+    this.coords = [];
+    // reset parameters
+    this.calculateScl(this._duration);
+    this.reset();
+    this._smooth_circles = this.smoothNumbers(this._circles);
 
-    this.smooth_primes = this.smoothNumbers(this.primes);
+    let result = this.calculateRho(this._circles, this._relative_rho);
+    if (result) {
+      this.rho = result.rho;
+      this.displacement = result.displacement;
+    }
   }
 
   draw() {
+    //console.log({stopped: this._stopped, smooth: this._smooth_circles, rho: this.rho, displacement: this.displacement});
 
-    if (this.stopped) return;
+    if (this._stopped) return;
+    if (!this._smooth_circles) return;
+    if (!this.rho || !this.displacement) return;
 
     let start, end, progress;
-
     progress = (this.frameCounter - this.frameOffset) / (this.fps * this._duration);
 
     if (progress >= 1) {
       this.frameOffset = this.frameCounter;
       this.direction *= -1;
+
+      if (this.direction === 1) {
+        this.coords = [];
+      }
+
       return;
     }
 
-    if (this.direction == 1) {
-      start = 0;
-      end = parseInt(progress * lcm(this.smooth_primes));
-    } else if (this.direction == -1) {
-      end = lcm(this.smooth_primes);
-      start = parseInt(progress * end);
-    }
-
-    let coords = []; // all coordinates
-
-    let time_theta = 2 * Math.PI / (this._duration * this.fps) * (this.frameCounter - this.frameOffset);
-    let tx = this.time_scl * Math.cos(time_theta);
-    let ty = this.time_scl * Math.sin(time_theta);
     this.ctx.save();
     this.background("black");
     this.ctx.translate(this.width / 2, this.height / 2);
     this.ctx.scale(this.scl, this.scl);
-    this.ctx.lineWidth = this.linewidth
-    this.ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
 
-    for (let i = start; i < end; i++) {
-      let vx, vy;
-      vx = 0;
-      vy = 0;
+    let vx, vy;
+    vx = 0;
+    vy = 0;
+    if (this.direction === 1) {
+      for (let p = 0; p < this._smooth_circles.length; p++) {
+        let theta;
+        theta = Math.PI * 2 * progress * this._circles[p];
 
-      this.ctx.save();
-      for (let p = 0; p < this.smooth_primes.length && this.smooth_primes.length[p] != 0; p++) {
-        let rho, theta;
-        rho = this.width / Math.pow(2, p) / 4;
-        theta = Math.PI * 2 / this.smooth_primes[p] * i;
-        vx += rho * Math.cos(theta);
-        vy += rho * Math.sin(theta);
-
-        if ((i == end - 1 && this.direction == 1) || (i == start && this.direction == -1) ) {
-          this.ctx.rotate(theta);
-
-          this.ctx.beginPath();
-          this.ctx.moveTo(0, 0);
-          this.ctx.lineTo(rho, 0);
-          this.ctx.stroke();
-
-          this.ctx.beginPath();
-          this.ctx.arc(0, 0, rho, 0, Math.PI * 2);
-          this.ctx.stroke();
-
-          this.ctx.translate(rho, 0);
-          this.ctx.rotate(-theta);
+        if  (p < this._smooth_circles.length - 1) {
+          vx += this.displacement[p] * Math.cos(theta);
+          vy += this.displacement[p] * Math.sin(theta);
+        } else {
+          vx += this.rho[p] * Math.cos(theta);
+          vy += this.rho[p] * Math.sin(theta);
         }
       }
-      this.ctx.restore();
-      coords.push([vx, vy]);
+
+      this.coords.push([Math.floor(vx), Math.floor(vy)]);
+    } else {
+      this.coords.shift();
     }
 
-    for (let i = 1; i < coords.length; i++) {
+    if (this._draw_circles) {
+      this.ctx.save();
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+      for (let p = 0; p < this._smooth_circles.length; p++) {
+        let theta;
+        theta = Math.PI * 2 * progress * this._circles[p];
+
+        this.ctx.rotate(theta);
+
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, 0);
+        this.ctx.lineTo(this.displacement[p], 0);
+        this.ctx.stroke();
+        this.ctx.restore();
+
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, this.rho[p], 0, Math.PI * 2);
+        this.ctx.stroke();
+        this.ctx.translate(this.displacement[p], 0);
+        this.ctx.rotate(-theta);
+      }
+      this.ctx.restore();
+    }
+
+    let time_theta = 2 * Math.PI / (this._duration * this.fps) * (this.frameCounter - this.frameOffset);
+    let tx = this.time_scl * Math.cos(time_theta);
+    let ty = this.time_scl * Math.sin(time_theta);
+
+    this.ctx.save();
+    this.ctx.lineWidth = 3;
+    for (let i = 1; i < this.coords.length; i++) {
       // first line
       // y = a * x + c
-      let x = coords[i % coords.length][0];
-      let y = coords[i % coords.length][1];
+      let x = this.coords[i % this.coords.length][0];
+      let y = this.coords[i % this.coords.length][1];
 
       // second line
       // yy = b * xx + d
-      let xx = coords[i-1][0];
-      let yy = coords[i-1][1];
+      let xx = this.coords[i-1][0];
+      let yy = this.coords[i-1][1];
 
       let nx, ny, n, hue;
       if (this._moving_colors) {
@@ -184,11 +207,13 @@ class Sketch {
         nx = (x + xx) / 2 * this.noise_scl;
         ny = (y + yy) / 2 * this.noise_scl;
         n = this.noise.noise4D(nx, ny, tx, ty);
-        hue = (n + 1) / 2 * 360;
+        hue = Math.floor((n + 1) / 2 * 360);
+      } else {
+        hue = this._hue;
       }
 
       if (this._colors) {
-        this.setHSLstroke(hue || 0, 100, 25);
+        this.setHSLstroke(hue, 100, 25);
       } else {
         this.setBWstroke(255);
       }
@@ -198,33 +223,114 @@ class Sketch {
       this.ctx.lineTo(x, y); // end point
       this.ctx.stroke();
     }
+
+    this.ctx.restore();
+
     this.ctx.restore();
   }
 
-  smoothNumbers(numbers, resolution_step, min_value) {
-    if (resolution_step === undefined) resolution_step = 2;
-    if (min_value === undefined) min_value = 25;
+  calculateScl(duration) {
+    this.noise_scl = 0.002;
+    this.time_scl = 0.5 * duration / 15;
+  }
+
+  smoothNumbers(numbers, factor) {
+    let min_points = this.duration * this.fps * (factor || 8);
+    let resolution_step = 2;
 
     let smoothed_numbers = [...numbers];
-    while (Math.min(...smoothed_numbers) < min_value) {
-      smoothed_numbers = smoothed_numbers.map(x => x * resolution_step);
+    if (smoothed_numbers.length >= 2) {
+      while (lcm(smoothed_numbers) < min_points) {
+        smoothed_numbers = smoothed_numbers.map(x => x * resolution_step);
+      }
+    } else if (smoothed_numbers.length === 1) {
+      smoothed_numbers = [min_points];
+    } else if (smoothed_numbers.length === 0) {
+      return;
     }
+
     return smoothed_numbers;
   }
 
+  calculateRho(numbers, relative_radiuses) {
+    if (numbers.length === 0) return;
+
+    if (relative_radiuses === [] || relative_radiuses === undefined || relative_radiuses.length != numbers.length) {
+      relative_radiuses = new Array(numbers.length).fill(1);
+    }
+
+    let relative_sum;
+    relative_sum = relative_radiuses.reduce((total, value) => total += value);
+
+    let rho;
+    rho = numbers.map((r, i) => this.width / 4 / relative_sum * relative_radiuses[i]);
+    let displacement = [];
+    for (let i = 0; i < rho.length; i++) {
+      if (i < rho.length - 1) {
+        displacement.push(rho[i] + rho[i+1]);
+      } else {
+        displacement.push(rho[i]);
+      }
+    }
+    return {
+      rho: rho,
+      displacement: displacement
+    };
+  }
+
+  setRevolutions(index, value) {
+    this._circles[index] = value;
+    this.reset();
+  }
+
+  setRelativeRadius(index, value) {
+    this._relative_rho[index] = value;
+    this.reset();
+  }
+
   reset() {
-    this.background("black");
     this.frameOffset = this.frameCounter;
+    this.ended = false;
+    this._stopped = false;
+    this.direction = 1;
+    this.coords = [];
+
+    this._smooth_circles = this.smoothNumbers(this._circles);
+    let result = this.calculateRho(this._circles, this._relative_rho);
+    if (result) {
+      this.rho = result.rho;
+      this.displacement = result.displacement;
+    }
+
+    this.background("black");
   }
 
   stop() {
-    this.stopped = true;
+    this._stopped = true;
     this.pause_started = this.frameCounter;
   }
 
   play() {
-    this.stopped = false;
+    this._stopped = false;
     this.frameOffset += this.frameCounter - this.pause_started;
+  }
+
+  addCircle(revolutions, relative_rho) {
+    this._circles.push(revolutions || 1);
+    this._relative_rho.push(relative_rho || 1);
+
+    this.reset();
+  }
+
+  removeCircle() {
+    this._circles.pop();
+    this._relative_rho.pop();
+
+    this.reset();
+  }
+
+  get stopped() {
+    return this._stopped;
   }
 
   get duration() {
@@ -232,7 +338,18 @@ class Sketch {
   }
 
   set duration(d) {
+    this.reset();
+
     this._duration = d;
+    this._smooth_circles = this.smoothNumbers(this._circles);
+    this.calculateScl(this._duration);
+
+    let result = this.calculateRho(this._circles, this._relative_rho);
+    if (result) {
+      this.rho = result.rho;
+      this.displacement = result.displacement;
+    }
+
   }
 
   get colors() {
@@ -249,5 +366,31 @@ class Sketch {
 
   set moving_colors(m) {
     this._moving_colors = m;
+  }
+
+  get hue() {
+    return this._hue;
+  }
+
+  set hue(h) {
+    this._hue = h;
+  }
+
+  get draw_circles() {
+    return this._draw_circles;
+  }
+
+  set draw_circles(d) {
+    this._draw_circles = d;
+  }
+
+  get circles() {
+    if (this._circles === undefined) return [];
+    return this._circles;
+  }
+
+  get relative_rho() {
+    if (this._relative_rho === undefined) return [];
+    return this._relative_rho;
   }
 }
