@@ -12,13 +12,25 @@ class Sketch {
 
     this.width = canvas.width;
     this.height = canvas.height;
+    this.recording = false;
 
     this.frameCounter = 0;
   }
 
+  resize() {
+    this.width = canvas.width;
+    this.height = canvas.height;
+
+    let result = this.calculateRho(this._circles, this._relative_rho);
+    if (result) {
+      this.rho = result.rho;
+      this.displacement = result.displacement;
+    }
+  }
+
   setFps(fps) {
     // set fps
-    this.fps = fps || 30;
+    this.fps = fps || 60;
     // keep track of time to handle fps
     this.then = performance.now();
     // time between frames
@@ -118,17 +130,19 @@ class Sketch {
     if (!this.rho || !this.displacement) return;
 
     let start, end, progress;
-    progress = (this.frameCounter - this.frameOffset) / (this.fps * this._duration);
+    progress = (this.frameCounter - this.frameOffset - 2) / (this.fps * this._duration);
 
     if (progress >= 1) {
       this.frameOffset = this.frameCounter;
       this.direction *= -1;
-
       if (this.direction === 1) {
         this.coords = [];
-      }
 
-      return;
+        if (this.recording) {
+          this.saveCapture();
+          this.recording = false;
+        }
+      }
     }
 
     this.ctx.save();
@@ -142,7 +156,7 @@ class Sketch {
     if (this.direction === 1) {
       for (let p = 0; p < this._smooth_circles.length; p++) {
         let theta;
-        theta = Math.PI * 2 * progress * this._circles[p];
+        theta = - Math.PI * 2 * progress * this._circles[p];
 
         if  (p < this._smooth_circles.length - 1) {
           vx += this.displacement[p] * Math.cos(theta);
@@ -164,7 +178,7 @@ class Sketch {
       this.ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
       for (let p = 0; p < this._smooth_circles.length; p++) {
         let theta;
-        theta = Math.PI * 2 * progress * this._circles[p];
+        theta = - Math.PI * 2 * progress * this._circles[p];
 
         this.ctx.rotate(theta);
 
@@ -207,7 +221,7 @@ class Sketch {
         nx = (x + xx) / 2 * this.noise_scl;
         ny = (y + yy) / 2 * this.noise_scl;
         n = this.noise.noise4D(nx, ny, tx, ty);
-        hue = Math.floor((n + 1) / 2 * 360);
+        hue = Math.floor(((n + 1) / 2 * 360) % 360);
       } else {
         hue = this._hue;
       }
@@ -227,6 +241,11 @@ class Sketch {
     this.ctx.restore();
 
     this.ctx.restore();
+
+    if (this.recording) {
+      capturer.capture(this.canvas);
+    }
+
   }
 
   calculateScl(duration) {
@@ -235,8 +254,8 @@ class Sketch {
   }
 
   smoothNumbers(numbers, factor) {
-    let min_points = this.duration * this.fps * (factor || 8);
-    let resolution_step = 2;
+    let min_points = this.duration * this.fps * (factor || 16);
+    let resolution_step = 4;
 
     let smoothed_numbers = [...numbers];
     if (smoothed_numbers.length >= 2) {
@@ -303,6 +322,8 @@ class Sketch {
     }
 
     this.background("black");
+
+    if (this.recording) this.stopRecording();
   }
 
   stop() {
@@ -313,6 +334,27 @@ class Sketch {
   play() {
     this._stopped = false;
     this.frameOffset += this.frameCounter - this.pause_started;
+  }
+
+  startRecordind() {
+    this.recording = true;
+    capturer.start();
+    console.log("%c Started recording", "color:yellow;font-size:1rem;");
+  }
+
+  stopRecording() {
+    this.recording = false;
+    capturer.stop();
+    this.reset();
+  }
+
+  saveCapture() {
+    console.log("%c Recording ended. Saving.", "color:green;font-size:1rem;");
+    return new Promise(resolve => {
+      capturer.stop();
+      capturer.save();
+      this.reset();
+    });
   }
 
   addCircle(revolutions, relative_rho) {

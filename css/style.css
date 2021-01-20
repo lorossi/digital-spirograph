@@ -2,6 +2,8 @@ body *, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1rem;
 }
 
 .container {
@@ -14,17 +16,22 @@ body *, body {
   align-items: center;
 }
 
-#sketch {
-  min-width: 300px;
-  min-height: 300px;
+.form {
+  overflow-y: auto;
+  margin-top: 0;
+  min-width: 10vw;
+  padding: 2rem;
 }
 
-.form {
-  min-width: 5vw;
+form[name="dynamic_form"] {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-start;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+form {
+  margin-bottom: 1rem;
 }
 
 form[direction="row"] label {
@@ -33,4 +40,55 @@ form[direction="row"] label {
 
 form[direction="col"] label {
   display: block;
+}
+
+form * {
+  user-select: none;
+  display: inline;
+}
+
+.circles_container {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid black;
+}
+
+.circles_container label:first-of-type {
+  margin-top: 0.5rem;
+}
+
+button {
+  background-color: white;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  margin: 0.25rem;
+}
+
+button:first-of-type {
+  margin-left: 0;
+}
+
+input[type="range"] {
+  float: right;
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  margin-top: 0.125rem;
+}
+
+button, .circles_container {
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+@media only screen and (max-width: 480px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .form {
+    flex-direction: column;
+  }
 }
