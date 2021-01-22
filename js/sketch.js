@@ -142,6 +142,7 @@ class Sketch {
 
         if (this.recording) {
           this.saveCapture();
+          $(".form .update").text("Video is now being generated. It might take a while! Reload the page afterwards.");
           this.recording = false;
         }
       }
