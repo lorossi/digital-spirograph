@@ -142,7 +142,7 @@ class Sketch {
 
         if (this.recording) {
           this.saveCapture();
-          $(".form .update").text("Video is now being generated. It might take a while! Reload the page afterwards.");
+          $(".form").html("<div class='update'>Video is now being generated. It might take a while!<br>Reload the page afterwards.</div>");
           this.recording = false;
         }
       }
