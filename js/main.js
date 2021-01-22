@@ -30,6 +30,9 @@ $(document).ready(() => {
     $("#colors[value=colors]").prop("checked", s.colors);
     $("#colors[value=bw]").prop("checked", !s.colors);
 
+    $("#position[value=inside]").prop("checked", s.inside);
+    $("#position[value=outside]").prop("checked", !s.inside);
+
     $("[name=moving_colors]").prop("checked", s.moving_colors);
     $("[name=moving_colors]").prop("disabled", !s.colors);
 
@@ -89,6 +92,11 @@ $(document).ready(() => {
       let duration = $(e.target).val();
       $(e.target).prev().text(duration);
       s.duration = duration;
+    });
+
+    $("[name=position]").on("change", (e) => {
+      let inside = $(e.target).val() === "inside";
+      s.inside = inside;
     });
 
     $("[name=color_mode]").on("change", (e) => {

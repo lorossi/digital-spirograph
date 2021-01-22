@@ -41,7 +41,16 @@
               <input type="range" id="duration" name="duration_slider" min="1" max="60" value="5">
             </label>
           </form>
-
+          <form direction="row">
+          <label>
+            <input type="radio" id="position" name="position" value="inside">
+            draw circles inside
+          </label>
+          <label>
+            <input type="radio" id="position" name="position" value="outside">
+              draw circles outside
+            </label>
+        </form>
           <form direction="row">
             <label>
               <input type="radio" id="colors" name="color_mode" value="colors">
@@ -52,7 +61,6 @@
                 black and white
               </label>
           </form>
-
           <form direction="col">
             <label>
               <input type="checkbox" id="colors" name="moving_colors" value="2">

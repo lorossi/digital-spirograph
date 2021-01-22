@@ -105,6 +105,7 @@ class Sketch {
     this._relative_rho = [1];
     this._duration = 15;
     this.scl = 0.8;
+    this._inside = false;
     this._colors = false;
     this._moving_colors = false;
     this._hue = parseInt(random() * 360);
@@ -271,7 +272,7 @@ class Sketch {
     return smoothed_numbers;
   }
 
-  calculateRho(numbers, relative_radiuses) {
+  calculateRho(numbers, relative_radiuses, inside) {
     if (numbers.length === 0) return;
 
     if (relative_radiuses === [] || relative_radiuses === undefined || relative_radiuses.length != numbers.length) {
@@ -279,18 +280,32 @@ class Sketch {
     }
 
     let relative_sum;
-    relative_sum = relative_radiuses.reduce((total, value) => total += value);
+    if (inside) {
+      relative_sum = Math.max(...relative_radiuses);
+    } else {
+      relative_sum = relative_radiuses.reduce((total, value) => total += value);
+    }
 
     let rho;
     rho = numbers.map((r, i) => this.width / 4 / relative_sum * relative_radiuses[i]);
+
     let displacement = [];
     for (let i = 0; i < rho.length; i++) {
-      if (i < rho.length - 1) {
-        displacement.push(rho[i] + rho[i+1]);
+      if (inside) {
+        if (i < rho.length - 1) {
+          displacement.push(rho[i] - rho[i+1]);
+        } else {
+          displacement.push(rho[i]);
+        }
       } else {
-        displacement.push(rho[i]);
+        if (i < rho.length - 1) {
+          displacement.push(rho[i] + rho[i+1]);
+        } else {
+          displacement.push(rho[i]);
+        }
       }
     }
+
     return {
       rho: rho,
       displacement: displacement
@@ -315,7 +330,7 @@ class Sketch {
     this.coords = [];
 
     this._smooth_circles = this.smoothNumbers(this._circles);
-    let result = this.calculateRho(this._circles, this._relative_rho);
+    let result = this.calculateRho(this._circles, this._relative_rho, this._inside);
     if (result) {
       this.rho = result.rho;
       this.displacement = result.displacement;
@@ -392,6 +407,15 @@ class Sketch {
       this.displacement = result.displacement;
     }
 
+  }
+
+  get inside() {
+    return this._inside;
+  }
+
+  set inside(i) {
+    this._inside = i;
+    this.reset();
   }
 
   get colors() {
