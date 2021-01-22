@@ -104,6 +104,7 @@ class Sketch {
     this._circles = [1];
     this._relative_rho = [1];
     this._duration = 15;
+    this._line_width = 3;
     this.scl = 0.8;
     this._inside = false;
     this._colors = false;
@@ -204,7 +205,7 @@ class Sketch {
     let ty = this.time_scl * Math.sin(time_theta);
 
     this.ctx.save();
-    this.ctx.lineWidth = 3;
+    this.ctx.lineWidth = this._line_width;
     for (let i = 1; i < this.coords.length; i++) {
       // first line
       // y = a * x + c
@@ -407,6 +408,15 @@ class Sketch {
       this.displacement = result.displacement;
     }
 
+  }
+
+  get line_width() {
+    return this._line_width;
+  }
+
+  set line_width(w) {
+    this._line_width = w;
+    this.reset();
   }
 
   get inside() {
