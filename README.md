@@ -6,4 +6,7 @@ If you like your creation, save it by clicking on "record". It might take a whil
 
 Have fun!
 ## Credits
+
+I used [jwagner's](https://github.com/jwagner/) [simplex noise library](https://github.com/jwagner/simplex-noise.js).
+
 This project is distributed under Attribution 4.0 International (CC BY 4.0) license.
